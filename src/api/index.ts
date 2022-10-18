@@ -1,5 +1,6 @@
 import { useAppNotifyStore } from '@/store/appNotify';
 import axios, { AxiosError, AxiosPromise, AxiosResponse } from 'axios';
+import { BACKEND_BASE } from './config';
 
 let appNotifyStore = null;
 
@@ -10,7 +11,7 @@ const notifyConfig: { type: 'danger'; duration: number } = {
 
 // 配置新建一个 axios 实例
 const service = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: BACKEND_BASE, //import.meta.env.VITE_API_URL,
   timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 });
