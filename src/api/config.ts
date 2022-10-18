@@ -1,5 +1,5 @@
-const DEBUG = process.env.NODE_ENV === 'development';
-const domain = process.env.DOMIAN || 'https://sub.store';
+const DEBUG = import.meta.env.DEV;
+const domain = import.meta.env.VITE_API_URL || 'https://sub.store';
 
 let savedDomain = localStorage.getItem('domain')
 
