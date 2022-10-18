@@ -23,12 +23,13 @@
   import loon from '@/assets/icons/loon.png';
   import stash from '@/assets/icons/stash.png';
   import shadowrocket from '@/assets/icons/shadowrocket.png';
+  import { BACKEND_BASE } from '@/api/config';
 
   const { name, type } = defineProps<{
     name: string;
     type: 'sub' | 'collection';
   }>();
-  const host = import.meta.env.VITE_API_URL;
+  const host = BACKEND_BASE; // import.meta.env.VITE_API_URL;
   const platformList = [
     {
       name: 'Clash',

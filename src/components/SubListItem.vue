@@ -119,6 +119,7 @@
   import useV3Clipboard from 'vue-clipboard3';
   import { useI18n } from 'vue-i18n';
   import { useRouter } from 'vue-router';
+  import { BACKEND_BASE } from '@/api/config';
 
   const { copy, isSupported } = useClipboard();
   const { toClipboard: copyFallback } = useV3Clipboard();
@@ -310,7 +311,7 @@
   const { showNotify } = useAppNotifyStore();
 
   const onClickCopyLink = async () => {
-    const host = import.meta.env.VITE_API_URL;
+    const host = BACKEND_BASE; // import.meta.env.VITE_API_URL;
     const url = `${host}/download/${
       props.type === 'collection' ? 'collection/' : ''
     }${name}`;

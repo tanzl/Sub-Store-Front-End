@@ -1,6 +1,6 @@
 import { useAppNotifyStore } from '@/store/appNotify';
 import axios, { AxiosError, AxiosPromise, AxiosResponse } from 'axios';
-import { BACKEND_BASE } from './config';
+import { BACKEND_BASE } from '@/api/config';
 
 let appNotifyStore = null;
 
