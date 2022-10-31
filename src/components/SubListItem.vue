@@ -19,6 +19,13 @@
               <font-awesome-icon icon="fa-solid fa-clone"></font-awesome-icon>
             </button>
             <button
+              class="refresh-sub-flow"
+              @click.stop="onClickRefresh"
+              v-if="props.type === 'sub'"
+            >
+              <font-awesome-icon icon="fa-solid fa-arrow-rotate-right" />
+            </button>
+            <button
               class="copy-sub-link"
               @click.stop="swipeController"
               v-if="!isMobile()"
@@ -130,7 +137,6 @@
     sub?: Sub;
     collection?: Collection;
   }>();
-
   const compareTableIsVisible = ref(false);
   usePopupRoute(compareTableIsVisible);
 
@@ -323,6 +329,15 @@
     }
     showNotify({ title: t('subPage.copyNotify.succeed'), type: 'success' });
   };
+  const onClickRefresh = async () => {
+    Toast.loading(t('globalNotify.refresh.loading'), {
+      cover: true,
+      id: 'refresh',
+    });
+    await subsStore.fetchFlows(ref([props.sub]).value);
+    Toast.hide('refresh');
+    showNotify({ title: t('globalNotify.refresh.succeed') });
+  };
 </script>
 
 <style lang="scss" scoped>
@@ -375,10 +390,11 @@
           color: var(--primary-text-color);
         }
 
-        .copy-sub-link {
+        .copy-sub-link,
+        .refresh-sub-flow {
           background-color: transparent;
           border: none;
-          padding: 0 12px;
+          padding: 0 8px;
           cursor: pointer;
           display: inline-flex;
           justify-content: center;
