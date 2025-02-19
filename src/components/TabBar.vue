@@ -8,9 +8,10 @@
       size="22px"
     >
       <nut-tabbar-item class="tabbar-item" to="/subs" icon="link" />
+      <nut-tabbar-item v-show="!appearanceSetting.istabBar2" class="tabbar-item" to="/files" icon="category" />
 
       <nut-tabbar-item
-        v-show="!istabBar"
+        v-show="!appearanceSetting.istabBar"
         class="tabbar-item"
         to="/sync"
         icon="refresh2"
@@ -23,25 +24,37 @@
 
 <script lang="ts" setup>
   import { useGlobalStore } from '@/store/global';
+  import { useSettingsStore } from '@/store/settings';
   import { storeToRefs } from 'pinia';
   import { ref } from 'vue';
   import { onBeforeRouteUpdate, useRoute } from 'vue-router';
 
   const route = useRoute();
-  const routeList = ['/subs', '/sync', '/my'];
+  const routeList = ['/subs', '/files', '/sync', '/my'];
   const activeTab = ref(routeList.indexOf(route.path));
 
-  onBeforeRouteUpdate((to, from, next) => {
-    activeTab.value = routeList.indexOf(to.path);
-    next();
-  });
+
 
   const globalStore = useGlobalStore();
-  const { bottomSafeArea, istabBar, env } = storeToRefs(globalStore);
+  const settingsStore = useSettingsStore();
+  const { appearanceSetting } = storeToRefs(settingsStore);
+
+  const {
+    bottomSafeArea,
+    // istabBar,
+    // istabBar2,
+    env
+  } = storeToRefs(globalStore);
   const style = {
     height: `${bottomSafeArea.value + 12 + 44}px`,
     paddingBottom: bottomSafeArea.value + 'px',
   };
+  onBeforeRouteUpdate((to, from, next) => {
+    activeTab.value = routeList.indexOf(to.path);
+    // const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    // globalStore.setSavedPositions(from.path, { left: 0, top: scrollTop })
+    next();
+  });
 </script>
 
 <style lang="scss" scoped>
@@ -57,6 +70,7 @@
     }
 
     :deep(.tabbar-item) {
+      cursor: pointer;
       &.nut-tabbar-item__icon--unactive {
         color: var(--lowest-text-color);
       }

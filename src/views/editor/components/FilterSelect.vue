@@ -6,16 +6,19 @@
         v-for="(item, index) in opt[type]"
         :key="item"
         :label="item"
-        >{{
-          $t(`editorPage.subConfig.nodeActions['${type}'].options[${index}]`)
-        }}</nut-checkbox
-      >
+        >
+      <span class="item" v-if="type === 'Region Filter' && item === 'TW'">
+        <img :src="tw" alt="">&nbsp;{{ item }}
+      </span>
+      <span v-else>{{ $t(`editorPage.subConfig.nodeActions['${type}'].options[${index}]`) }}</span>
+      </nut-checkbox>
     </nut-checkboxgroup>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { inject, ref, onMounted } from 'vue';
+  import tw from '@/assets/icons/tw.png';
 
   const { type, id } = defineProps<{
     type: string;
@@ -27,7 +30,7 @@
   // 此处 key 需要与 i18n 的 actions 中的 key 相同
   // 值的次序需要与该选项的 options 值 顺序相同
   const opt = {
-    'Region Filter': ['HK', 'TW', 'SG', 'JP', 'UK', 'US'],
+    'Region Filter': ['HK', 'TW', 'SG', 'JP', 'UK', 'US', 'DE', 'KR'],
     'Type Filter': [
       'ss',
       'ssr',
@@ -40,7 +43,13 @@
       'tuic',
       'hysteria',
       'hysteria2',
+      'juicity',
+      'mieru',
+      'anytls',
       'wireguard',
+      'ssh',
+      'external',
+      'direct'
     ],
   };
 
@@ -57,6 +66,14 @@
   .checkbox-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    .item {
+      display: flex;
+      align-items: center;
+      img {
+        width: 14px;
+        height: 14px;
+      }
+    }
 
     view {
       margin-bottom: 16px;
