@@ -1,4 +1,5 @@
 <template>
+  <!-- lock-scroll  -->
   <nut-dialog
     teleport="#app"
     pop-class="artifact-panel auto-dialog"
@@ -9,9 +10,22 @@
     @cancel="closePanel"
     closeOnPopstate
     visible
-    lock-scroll
   >
     <nut-form :model-value="editPanelData" ref="ruleForm">
+      <nut-form-item
+        :label="$t(`editorPage.subConfig.basic.icon.label`)"
+        prop="icon"
+      >
+        <nut-input
+          input-align="left"
+          class="nut-input-text"
+          :placeholder="$t(`editorPage.subConfig.basic.icon.placeholder`)"
+          v-model.trim="editPanelData.icon"
+          type="text"
+          left-icon="shop"
+          @click-left-icon="iconTips"
+        />
+      </nut-form-item>
       <nut-form-item
         :label="$t(`syncPage.addArtForm.name.label`)"
         prop="name"
@@ -42,7 +56,7 @@
           type="text"
         />
       </nut-form-item>
-      
+
       <nut-form-item
         :label="$t(`syncPage.addArtForm.displayName.label`)"
         prop="displayName"
@@ -55,6 +69,7 @@
           type="text"
         />
       </nut-form-item>
+
       <nut-form-item
         :label="$t(`syncPage.addArtForm.source.label`)"
         required
@@ -77,42 +92,58 @@
         />
         <!-- readonly 只读 -->
 
-        <nut-cascader
-          :title="$t('syncPage.selectSource.title')"
-          v-model:visible="sourceSelectorIsVisible"
-          v-model="sourceModel"
-          @change="sourceChange"
-          :options="sourceOptions"
-        ></nut-cascader>
+        <Teleport to="#ztop">
+          <nut-cascader
+            :title="$t('syncPage.selectSource.title')"
+            v-model:visible="sourceSelectorIsVisible"
+            v-model="sourceModel"
+            @change="sourceChange"
+            :options="sourceOptions"
+          ></nut-cascader>
+        </Teleport>
+      </nut-form-item>
+      <template v-if="sourceInput && ['subscription', 'collection'].includes(editPanelData.type)">
+        <div class="include-unsupported-proxy-wrapper">
+          <div class="label" @click="includeUnsupportedProxyTips">
+            <p>{{ $t(`syncPage.addArtForm.includeUnsupportedProxy.label`) }}</p>
+            <nut-icon name="tips"></nut-icon>
+          </div>
+          <nut-switch v-model="editPanelData.includeUnsupportedProxy"/>
+        </div>
 
-      </nut-form-item>
-      <nut-form-item :label="$t(`syncPage.addArtForm.platform.label`)">
-        <nut-radiogroup
-          direction="horizontal"
-          v-model="editPanelData.platform"
-          class="artifact-radio-group"
-        >
-          <nut-radio label="ClashMeta">Clash.Meta</nut-radio>
-          <nut-radio label="Surge">Surge</nut-radio>
-          <nut-radio label="Stash">Stash</nut-radio>
-          <nut-radio label="QX">Quantumult X</nut-radio>
-          <nut-radio label="Clash">Clash</nut-radio>
-          <nut-radio label="Loon">Loon</nut-radio>
-          <nut-radio label="ShadowRocket">ShadowRocket</nut-radio>
-          <nut-radio label="V2Ray">V2Ray</nut-radio>
-        </nut-radiogroup>
-      </nut-form-item>
+        <nut-form-item :label="$t(`syncPage.addArtForm.platform.label`)">
+          <nut-radiogroup
+            direction="horizontal"
+            v-model="editPanelData.platform"
+            class="artifact-radio-group"
+          >
+            <nut-radio label="Stash">Stash</nut-radio>
+            <nut-radio label="ClashMeta">Mihomo</nut-radio>
+            <nut-radio label="Clash">Clash(Deprecated)</nut-radio>
+            <nut-radio label="Egern">Egern</nut-radio>
+            <nut-radio label="Surfboard">Surfboard</nut-radio>
+            <nut-radio label="SurgeMac"><a href="https://github.com/sub-store-org/Sub-Store/wiki/%E9%93%BE%E6%8E%A5%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E" target="_blank">Surge(macOS) ⓘ</a></nut-radio>
+            <nut-radio label="Surge">Surge</nut-radio>
+            <nut-radio label="Loon">Loon</nut-radio>
+            <nut-radio label="ShadowRocket">Shadowrocket</nut-radio>
+            <nut-radio label="QX">Quantumult X</nut-radio>
+            <nut-radio label="sing-box">sing-box</nut-radio>
+            <nut-radio label="V2Ray">V2Ray</nut-radio>
+          </nut-radiogroup>
+        </nut-form-item>
+      </template>
     </nut-form>
   </nut-dialog>
 </template>
 
 <script lang="ts" setup>
+  import { useRouter } from "vue-router";
   import { useArtifactsStore } from '@/store/artifacts';
   import { useSubsStore } from '@/store/subs';
   import { Dialog, Toast } from '@nutui/nutui';
   import { computed, ref, toRaw, watchEffect } from 'vue';
   import { useI18n } from 'vue-i18n';
-
+  const router = useRouter();
   const { t } = useI18n();
   const artifactsStore = useArtifactsStore();
   const isInit = ref(false);
@@ -120,7 +151,7 @@
   const ruleForm = ref();
 
   const emit = defineEmits(['close']);
-  
+
   const { name } = defineProps<{
     name: string;
   }>();
@@ -140,9 +171,11 @@
   const editPanelData = ref<Artifact>({
     name: '',
     displayName: '',
+    icon: '',
     source: '',
-    type: 'subscription',
-    platform: 'Surge',
+    type: 'file',
+    platform: 'Stash',
+    includeUnsupportedProxy: false,
   });
 
   const sourceSelectorIsVisible = ref(false);
@@ -160,6 +193,12 @@
           collection.displayName ||
           collection['display-name'] ||
           collection.name,
+      };
+    });
+    const filesNameList = useSubsStore().files.map(file => {
+      return {
+        name: file.name,
+        displayName: file.displayName || file['display-name'] || file.name,
       };
     });
 
@@ -185,20 +224,30 @@
         })),
       });
     }
+    if (filesNameList.length > 0) {
+      options.push({
+        value: 'file',
+        text: t('specificWord.file'),
+        children: filesNameList.map(item => ({
+          value: item.name,
+          text: item.displayName,
+        })),
+      });
+    }
     return options;
   });
 
   const displayType = computed(() => {
     const typeValue = editPanelData.value.type;
-    return sourceOptions.value.find(item => item.value === typeValue).text;
+    return sourceOptions.value.find(item => item.value === typeValue)?.text ?? t(`specificWord.unknown`);
   });
 
   const displayName = computed(() => {
     const typeValue = editPanelData.value.type;
     const typeObj = sourceOptions.value.find(item => item.value === typeValue);
-    return typeObj.children.find(
+    return typeObj?.children?.find(
       item => item.value === editPanelData.value.source
-    ).text;
+    )?.text ?? t(`specificWord.unknown`);
   });
 
   const sourceChange = v1 => {
@@ -209,7 +258,7 @@
 
   const onClickNameInput = () => {
     if (isEditMode.value) {
-      Toast.warn('同步订阅配置的名称不支持修改', { duration: 1000 });
+      Toast.warn('同步配置的名称不支持修改', { duration: 1000 });
     }
   };
   const submit = () => {
@@ -266,6 +315,23 @@
     ruleForm.value.validate(prop);
   };
 
+  const includeUnsupportedProxyTips = () => {
+    window.open('https://github.com/sub-store-org/Sub-Store/wiki/%E9%93%BE%E6%8E%A5%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E');
+    // const includeUnsupportedProxyTipsTitle = t(`syncPage.addArtForm.includeUnsupportedProxy.tips.title`)
+    // const includeUnsupportedProxyTipsContent = t(`syncPage.addArtForm.includeUnsupportedProxy.tips.content`)
+    // Dialog({
+    //   title: includeUnsupportedProxyTipsTitle,
+    //   content: includeUnsupportedProxyTipsContent,
+    //   popClass: 'auto-dialog',
+    //   okText: 'OK',
+    //   noCancelBtn: true,
+    //   closeOnPopstate: true,
+    //   lockScroll: false,
+    // });
+  };
+  const iconTips = () => {
+    router.push(`/icon/collection`);
+  };
   watchEffect(() => {
     if (!isInit.value && name) {
       const artifact = artifactsStore.artifacts.find(art => art.name === name);
@@ -282,11 +348,23 @@
 </script>
 
 <style lang="scss">
-
   .artifact-panel {
+    .include-unsupported-proxy-wrapper {
+      flex-direction: row;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      padding: 0 8px 0 8px;
+      .label {
+        color: var(--comment-text-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
     .nut-dialog {
-      width: 83vw;
-
+      width: 88vw;
       .nut-dialog__content {
         max-height: 72vh !important;
 
