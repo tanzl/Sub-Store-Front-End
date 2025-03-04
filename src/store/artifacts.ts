@@ -23,7 +23,7 @@ export const useArtifactsStore = defineStore('artifactsStore', {
     async createArtifact(data: Artifact) {
       const { showNotify } = useAppNotifyStore();
       const res = await artifactsApi.createArtifact(data);
-      if (res.data.status === 'success') {
+      if (res?.data?.status === 'success') {
         await this.fetchArtifactsData();
         showNotify({
           title: t('syncPage.addArtForm.succeedNotify'),
@@ -35,7 +35,7 @@ export const useArtifactsStore = defineStore('artifactsStore', {
       const { showNotify } = useAppNotifyStore();
 
       const res = await artifactsApi.editArtifact(name, data);
-      if (res.data.status === 'success') {
+      if (res?.data?.status === 'success') {
         await this.fetchArtifactsData();
         showNotify({
           title: t('syncPage.editArtForm.succeedNotify'),
@@ -55,6 +55,19 @@ export const useArtifactsStore = defineStore('artifactsStore', {
         });
       }
     },
+    async restoreArtifacts() {
+      const { showNotify } = useAppNotifyStore();
+
+      const res = await artifactsApi.restoreArtifacts();
+      if (res?.data?.status === 'success') {
+        await this.fetchArtifactsData();
+        showNotify({
+          type: "success",
+          title: t(`myPage.notify.restore.succeed`),
+          content: ``,
+        });
+      }
+    },
     async syncAllArtifact() {
       const { showNotify } = useAppNotifyStore();
 
@@ -65,6 +78,8 @@ export const useArtifactsStore = defineStore('artifactsStore', {
           title: t('syncPage.syncAllSucceed'),
           type: 'success',
         });
+      } else {
+        await this.fetchArtifactsData();
       }
     },
     async syncOneArtifact(name: string) {

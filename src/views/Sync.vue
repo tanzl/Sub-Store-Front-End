@@ -15,9 +15,23 @@
             bottom: bottomSafeArea + 48 + 12 + 8,
             right: 16,
           }"
-          :style="{ right: '16px', bottom: `${bottomSafeArea + 48 + 36}px` }"
+          :style="{
+            cursor: 'pointer',
+            left: '15px',
+            bottom: `${
+              bottomSafeArea +
+              48 + 36 + 
+              (!isMobile() ? (appearanceSetting.isSimpleMode ? 44 : 48) : 0)
+            }px`,
+          }"
         >
-          <div class="drag-btn" @click="onclickAddArtifact">
+          <div
+            v-if="appearanceSetting.showFloatingAddButton"
+            class="drag-btn"
+            @touchmove="onTa"
+            @touchend="enTa"
+            @click="onclickAddArtifact"
+          >
             <font-awesome-icon icon="fa-solid fa-plus" />
           </div>
         </nut-drag>
@@ -50,12 +64,25 @@
             />
           </nut-button>
           <nut-button
+            v-if="syncPlatform !== 'gitlab'"
+            class="upload-all-btn btn"
+            type="info"
+            plain
+            size="small"
+            :loading="downloadAllIsLoading"
+            @click="downloadAll"
+          >
+            <font-awesome-icon
+              icon="fa-solid fa-cloud-arrow-down"
+              v-if="!downloadAllIsLoading"
+            />
+          </nut-button>
+          <nut-button
             class="preview-btn btn"
             type="info"
             plain
             size="small"
             @click="preview"
-            v-if="artifactStoreUrl"
           >
             <font-awesome-icon icon="fa-solid fa-eye" />
           </nut-button>
@@ -91,6 +118,35 @@
           </div>
         </template>
       </draggable>
+    </div>
+    <div v-else class="subs-list-wrapper">
+      <div class="sticky-title-wrapper sync-title">
+        <p class="list-title">{{ $t(`syncPage.title`) }}</p>
+        <div class="actions-wrapper">
+          <nut-button
+            class="upload-all-btn btn"
+            type="info"
+            plain
+            size="small"
+            :loading="downloadAllIsLoading"
+            @click="downloadAll"
+          >
+            <font-awesome-icon
+              icon="fa-solid fa-cloud-arrow-down"
+              v-if="!downloadAllIsLoading"
+            />
+          </nut-button>
+          <nut-button
+            class="preview-btn btn"
+            type="info"
+            plain
+            size="small"
+            @click="preview"
+          >
+            <font-awesome-icon icon="fa-solid fa-eye" />
+          </nut-button>
+        </div>
+      </div>
     </div>
 
     <!--没有数据-->
@@ -146,16 +202,19 @@ import ArtifactsListItem from "@/components/ArtifactsListItem.vue";
 import { useArtifactsStore } from "@/store/artifacts";
 import { storeToRefs } from "pinia";
 import { useGlobalStore } from "@/store/global";
-import { ref, computed, toRaw } from "vue";
+import { ref, computed, toRaw, onMounted } from "vue";
 import { initStores } from "@/utils/initApp";
 import { useSettingsStore } from "@/store/settings";
 // import { useI18n } from 'vue-i18n';
 import ArtifactPanel from "@/components/ArtifactPanel.vue";
+import { useMethodStore } from '@/store/methodStore';
 import draggable from "vuedraggable";
 import { useSubsApi } from "@/api/subs";
 import { useI18n } from "vue-i18n";
 import { useAppNotifyStore } from "@/store/appNotify";
 import { useBackend } from "@/hooks/useBackend";
+import { Dialog } from "@nutui/nutui";
+import { isMobile } from "@/utils/isMobile";
 
 const { env } = useBackend();
 const subsApi = useSubsApi();
@@ -163,9 +222,22 @@ const subsApi = useSubsApi();
 const globalStore = useGlobalStore();
 const artifactsStore = useArtifactsStore();
 const settingsStore = useSettingsStore();
-const { isLoading, fetchResult, bottomSafeArea } = storeToRefs(globalStore);
+const methodStore = useMethodStore();
+
+const {
+  // isSimpleMode,
+  isLoading,
+  fetchResult,
+  bottomSafeArea,
+  // showFloatingRefreshButton,
+} = storeToRefs(globalStore);
 const { artifacts } = storeToRefs(artifactsStore);
-const { artifactStore: artifactStoreUrl } = storeToRefs(settingsStore);
+const {
+  appearanceSetting,
+  artifactStore: artifactStoreUrl,
+  artifactStoreStatus,
+  syncPlatform,
+} = storeToRefs(settingsStore);
 const { showNotify } = useAppNotifyStore();
 const swipeDisabled = ref(false);
 const isEditPanelVisible = ref(false);
@@ -204,7 +276,44 @@ const uploadAllIsLoading = ref(false);
 const uploadAll = async () => {
   uploadAllIsLoading.value = true;
   await artifactsStore.syncAllArtifact();
+  await settingsStore.fetchSettings();
   uploadAllIsLoading.value = false;
+};
+const downloadAllIsLoading = ref(false);
+const downloadAll = async () => {
+  downloadAllIsLoading.value = true;
+  Dialog({
+    popClass: "auto-dialog",
+    title: t(`syncPage.preview.title`),
+    content: artifactStoreUrl.value
+      ? `${t("syncPage.download.content")}\n\n${t("syncPage.preview.content", {
+          status: artifactStoreStatus.value || "VALID",
+        })}\n${t("syncPage.preview.url")}`
+      : `${t("syncPage.download.content")}\n\n${t("syncPage.preview.content", {
+          status: artifactStoreStatus.value || "-",
+        })}\n${t("syncPage.preview.noUrl")}`,
+    noOkBtn: !artifactStoreUrl.value,
+    okText: t(`syncPage.download.confirm`),
+    cancelText: t(`syncPage.preview.cancel`),
+    // @ts-ignore
+    closeOnClickOverlay: true,
+    onOk: async () => {
+      try {
+        await artifactsStore.restoreArtifacts();
+      } catch (e) {
+        showNotify({
+          title: t("myPage.notify.restore.failed"),
+          type: "danger",
+          content: `${e.message ?? e}`,
+        });
+      } finally {
+        downloadAllIsLoading.value = false;
+      }
+    },
+    onCancel: async () => {
+      downloadAllIsLoading.value = false;
+    },
+  });
 };
 
 const refresh = () => {
@@ -212,8 +321,32 @@ const refresh = () => {
 };
 
 const preview = () => {
-  // console.log(artifactStoreUrl.value);
-  window.open(artifactStoreUrl.value);
+  if (
+    artifactStoreUrl.value &&
+    (!artifactStoreStatus.value || artifactStoreStatus.value === "VALID")
+  ) {
+    window.open(artifactStoreUrl.value);
+  } else {
+    Dialog({
+      popClass: "auto-dialog",
+      title: t(`syncPage.preview.title`),
+      content: artifactStoreUrl.value
+        ? `${t("syncPage.preview.content", {
+            status: artifactStoreStatus.value || "VALID",
+          })}\n${t("syncPage.preview.url")}`
+        : `${t("syncPage.preview.content", {
+            status: artifactStoreStatus.value || "-",
+          })}\n${t("syncPage.preview.noUrl")}`,
+      noOkBtn: !artifactStoreUrl.value,
+      okText: t(`syncPage.preview.confirm`),
+      cancelText: t(`syncPage.preview.cancel`),
+      // @ts-ignore
+      closeOnClickOverlay: true,
+      onOk: () => {
+        window.open(artifactStoreUrl.value);
+      },
+    });
+  }
 };
 
 const onClickEdit = (artifact: Artifact) => {
@@ -221,9 +354,26 @@ const onClickEdit = (artifact: Artifact) => {
   isEditPanelVisible.value = true;
 };
 
+const as = ref(false);
+
+const onTa = () => {
+  as.value = true;
+};
+
+const enTa = () => {
+  setTimeout(() => {
+    as.value = false;
+  }, 100);
+};
+
 const onclickAddArtifact = () => {
+  if (as.value) return;
   isEditPanelVisible.value = true;
 };
+
+onMounted(() => {
+  methodStore.registerMethod("addSync", onclickAddArtifact);
+});
 
 const closeArtifactPanel = () => {
   editTargetName.value = "";
@@ -240,12 +390,12 @@ const changeArtifacts = async () => {
     if (env.value.version > "2.14.48") {
       console.log("new sort > v2.14.48");
       const nameSortArray = artifacts.value.map((k) => k.name);
-      console.log(nameSortArray);
+      // console.log(nameSortArray);
       sortArtifacts = await subsApi.newSortSub(
         "artifacts",
         JSON.parse(JSON.stringify(toRaw(nameSortArray)))
       );
-      console.log(JSON.stringify(sortArtifacts));
+      // console.log(JSON.stringify(sortArtifacts));
     } else {
       console.log("old sort < v2.14.48");
       sortArtifacts = await subsApi.sortSub(
@@ -253,7 +403,7 @@ const changeArtifacts = async () => {
         JSON.parse(JSON.stringify(toRaw(artifacts.value)))
       );
     }
-    if (sortArtifacts.data.status !== "success") {
+    if (sortArtifacts?.data?.status !== "success") {
       sortFailed.value = true;
       showNotify({
         title: t("notify.sortsub.failed"),
