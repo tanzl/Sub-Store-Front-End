@@ -540,6 +540,8 @@ export default {
           tipsDes: "Use a JavaScript script to filter nodes",
           paramsEdit: 'Edit Parameters',
           noCache: 'noCache',
+          helpTitle: 'noCache Tips',
+          noCacheTips: 'When the cache is turned off, the script is refetched for each request.',
           paramsAdd: 'Add',
           paramsDelete: 'Delete',
           paramsOptions: 'Options',

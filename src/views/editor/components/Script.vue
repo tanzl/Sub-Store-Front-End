@@ -31,66 +31,6 @@
         @blur="handleLinkValueChange"
       />
     </div>
-    <template v-if="value.mode === 'link' || value.mode === 'script'">
-      <div class="input-wrapper-title">
-        <div class="title-label">
-          <nut-switch v-model="showKeyValue" />
-          <span>{{ $t(`editorPage.subConfig.nodeActions['${type}'].paramsEdit`) }}</span>
-        </div>
-        <div class="title-label">
-          <nut-switch v-model="params.noCache" />
-          <span>{{ $t(`editorPage.subConfig.nodeActions['${type}'].noCache`) }}</span>
-        </div>
-
-        <div v-if="showKeyValue" class="button">
-          <div @click="addParameter">{{ $t(`editorPage.subConfig.nodeActions['${type}'].paramsAdd`) }}</div>
-        </div>
-      </div>
-      <div v-if="showKeyValue" class="key-value-container">
-        <div class="key-value-box">
-          <div class="header">
-            <div class="item">key</div>
-            <div class="item">value</div>
-            <div class="item">{{ $t(`editorPage.subConfig.nodeActions['${type}'].paramsOptions`) }}</div>
-          </div>
-          <div class="content">
-            <div
-              v-for="(item, index) in paramsArguments"
-              :key="index"
-              class="key-value-row"
-            >
-              <div class="item">
-                <nut-textarea
-                  v-model="item.key"
-                  :border="false"
-                  placeholder="key"
-                  type="text"
-                  :rows="1"
-                  autosize
-                />
-              </div>
-              <div class="item">
-                <nut-textarea
-                  v-model="item.value"
-                  :border="false"
-                  placeholder="value"
-                  type="text"
-                  :rows="1"
-                  autosize
-                />
-              </div>
-              <div class="item key-value-operation">
-                <div @click="deleteItem(index)">{{ $t(`editorPage.subConfig.nodeActions['${type}'].paramsDelete`) }}</div>
-              </div>
-            </div>
-            <div v-if="!paramsArguments.length" class="empty-tips">
-              <p>{{ $t(`editorPage.subConfig.nodeActions['${type}'].paramsEmpty`) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </template>
-
     <div
       v-if="value.mode === 'script'"
       style="
@@ -129,6 +69,13 @@
         </span>
       </button> -->
     </div>
+    <ParamsEditor
+      v-model:paramsArguments="paramsArguments"
+      v-model:showKeyValue="showKeyValue"
+      v-model:noCache="params.noCache"
+      :type="type"
+      :mode="value.mode"
+    />
     <!-- <nut-textarea
         v-model="value.content"
         :placeholder="
@@ -162,6 +109,7 @@ import { useI18n } from "vue-i18n";
 import { usePopupRoute } from "@/hooks/usePopupRoute";
 import { useCodeStore } from "@/store/codeStore";
 import cmView from "@/views/editCode/cmView.vue";
+import ParamsEditor from '@/components/ParamsEditor.vue';
 
 const { type, id, sourceType } = defineProps<{
   type: string;
@@ -188,14 +136,6 @@ const params = reactive({
 });
 
 const paramsArguments = ref([]);
-
-const addParameter = () => {
-  paramsArguments.value.push({ key: "", value: "" });
-};
-
-const deleteItem = (index) => {
-  paramsArguments.value.splice(index, 1);
-};
 
 const parseUrlParams = (urlStr) => {
   let $arguments = {};
@@ -442,6 +382,7 @@ onMounted(() => {
         paramsArguments.value = Object.entries(params.arguments).map(
           ([key, value]) => ({ key, value }),
         );
+        showKeyValue.value = true;
       }
     } else {
       value.content = item.args.content;
@@ -459,13 +400,14 @@ onMounted(() => {
 watch(
   paramsArguments,
   (newVal) => {
+    console.log('paramsArguments changed:', newVal);
     params.arguments = newVal.reduce((acc, cur) => {
       if (cur.key) {
         acc[cur.key] = cur.value;
       }
       return acc;
     }, {});
-
+    console.log('params.arguments:', params.arguments);
     if (value.mode === "link") {
       value.content = buildUrlWithParams(
         params.url,
@@ -473,6 +415,8 @@ watch(
         params.noCache,
       );
     }
+    const item = form.process.find((item) => item.id === id);
+    item.args.arguments = params.arguments;
   },
   { deep: true },
 );

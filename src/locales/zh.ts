@@ -419,6 +419,8 @@ export default {
           tipsDes: '使用一段 JavaScript 脚本来修改节点信息',
           paramsEdit: '参数编辑',
           noCache: '关闭缓存',
+          helpTitle: '温馨提示',
+          noCacheTips: '关闭缓存后, 每次请求都会重新获取脚本内容',
           paramsAdd: '添加参数',
           paramsDelete: '删除',
           paramsOptions: '操作',
