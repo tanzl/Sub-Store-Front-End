@@ -32,6 +32,39 @@ img {
   pointer-events: none;
 }
 
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  *::-webkit-scrollbar-thumb {
+    background: #c0c1c58f;
+    border-radius: 5px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #c0c1c550;
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  *::-webkit-scrollbar-thumb {
+    background: #c0c1c550;
+    border-radius: 5px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #c0c1c58f;
+  }
+}
+
 //collapse
 .nut-collapse-item {
   .collapse-item.collapse-item {
@@ -54,11 +87,11 @@ img {
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
   z-index: 1100;
-  max-height: 72vh;
+  max-height: 95vh;
   max-width: 80vw;
   width: 80vw;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: auto;
   padding-bottom: 24px;
 }
 .nut-button {
@@ -74,6 +107,28 @@ img {
   font-size: 16px;
   font-weight: bold;
   line-height: 2;
+}
+// .nut-icon-order:before {
+//   content: "\e697";
+// }
+// .nut-icon-edit:before {
+//   content: "\e667";
+// }
+// .nut-icon-find:before {
+//   content: "\e661";
+// }
+
+.nut-icon-shop:before {
+  content: "\e688";
+  cursor: pointer;
+}
+.nut-icon-tips:before {
+  content: "\e671";
+  cursor: pointer;
+}
+.nut-icon-category:before {
+  font-size: 20px;
+  content: "\e662";
 }
 .nut-icon-issue:before {
   content: '\e6b1';
@@ -97,7 +152,18 @@ img {
 }
 .nut-icon-rect-right:before {
   content: '\e6cb'; // \2003 占位符
-  color: var(--lowest-text-color); // 更多设置
+  // color: var(--lowest-text-color); // 更多设置
+}
+.nut-icon-rect-down:before {
+  content: "\e6cc";
+}
+
+.nut-icon-triangle-down:before {
+  content: "\eb6d";
+}
+
+.nut-icon-triangle-up:before {
+  content: "\eb6e";
 }
 .nut-icon-arrow-right2:before {
   content: '\e6a9';

@@ -1,10 +1,9 @@
 export const actionsToProcess = (
   process: Process[],
   actionsList: ActionModuleProps[],
-  ignoreList: string[]
+  ignoreList: string[],
 ): Process[] => {
-  const getArgs = (id: string) => process.find((item) => item.id === id).args;
-
+  const findProcess = (id: string) => process.find((item) => item.id === id);
   const newProcess = process.filter((item) => {
     if (ignoreList.includes(item.type)) return item;
   });
@@ -12,8 +11,10 @@ export const actionsToProcess = (
   actionsList.forEach((item) => {
     newProcess.push({
       type: item.type,
-      args: getArgs(item.id),
+      args: findProcess(item.id).args,
+      customName: findProcess(item.id).customName,
       id: item.id,
+      disabled: !item.enabled,
     });
   });
   return newProcess;
